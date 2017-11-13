@@ -7,6 +7,7 @@ package tp2;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
@@ -93,8 +94,12 @@ public class TP2 extends Application {
         // Image son
         Image sonHt = new Image(getClass().getResourceAsStream("sonH.png"), 15, 15, true, true);
         Image sonLt= new Image(getClass().getResourceAsStream("sonL.png"), 15, 15, true, true);
-        ImageView sonH = new ImageView(sonHt);
-        ImageView sonL = new ImageView(sonLt);
+        ImageView sonHimg = new ImageView(sonHt);
+        ImageView sonLimg = new ImageView(sonLt);
+        
+        // Image playliste et mix
+        Image playListimg = new Image(getClass().getResourceAsStream("playlist.png"), 25, 25, true, true);
+        Image miximg= new Image(getClass().getResourceAsStream("mix.png"), 25, 25, true, true);
         
         // Button 
         Button listButton = new Button();
@@ -102,6 +107,18 @@ public class TP2 extends Application {
         
         // Slide
         Slider slidePlayer = new Slider();
+        Slider slideMix= new Slider();
+
+        
+        /***************/
+        /*    SETUP    */
+        // image des boutons
+        listButton.setPadding(Insets.EMPTY);
+        listButton.setGraphic(new ImageView(playListimg));
+                
+        mixButton.setPadding(Insets.EMPTY);
+        mixButton.setGraphic(new ImageView(miximg));
+       
         
         /***************/
         /* AFFECTATION */
@@ -116,12 +133,12 @@ public class TP2 extends Application {
         /***************/
         /* DECLARATION */
         // image des boutons        
-        Image backimg = new Image(getClass().getResourceAsStream("backimg.png"), 30, 30, true, true);
-        Image playimg = new Image(getClass().getResourceAsStream("playimg.png"), 30, 30, true, true);
-        Image forwimg = new Image(getClass().getResourceAsStream("forwimg.png"), 30, 30, true, true);
-        Image previmg = new Image(getClass().getResourceAsStream("previmg.png"), 30, 30, true, true);
-        Image stopimg = new Image(getClass().getResourceAsStream("stopimg.png"), 30, 30, true, true);
-        Image nextimg = new Image(getClass().getResourceAsStream("nextimg.png"), 30, 30, true, true);
+        Image backimg = new Image(getClass().getResourceAsStream("backimg.png"), 25, 25, true, true);
+        Image playimg = new Image(getClass().getResourceAsStream("playimg.png"), 25, 25, true, true);
+        Image forwimg = new Image(getClass().getResourceAsStream("forwimg.png"), 25, 25, true, true);
+        Image previmg = new Image(getClass().getResourceAsStream("previmg.png"), 25, 25, true, true);
+        Image stopimg = new Image(getClass().getResourceAsStream("stopimg.png"), 25, 25, true, true);
+        Image nextimg = new Image(getClass().getResourceAsStream("nextimg.png"), 25, 25, true, true);
 
         // Button de lecture
         Button backButton = new Button();
@@ -151,13 +168,20 @@ public class TP2 extends Application {
         stopButton.setGraphic(new ImageView(stopimg));
         nextButton.setPadding(Insets.EMPTY);
         nextButton.setGraphic(new ImageView(nextimg));
-
         
+        // PlayerBox
+        playerBox.setStyle("-fx-background-color: #ADFF2F;");
+        playerBox.setAlignment(Pos.CENTER);
+        
+        //MixBox
+        mixBox.setSpacing(5);
+
+
         /***************/
         /* AFFECTATION */
         // Slider pour la HBox "playerBox"
-        playerBox.getChildren().add(new Slider());
-        mixBox.getChildren().addAll(sonL,slidePlayer, sonH, listButton, mixButton);
+        playerBox.getChildren().add(slidePlayer);
+        mixBox.getChildren().addAll(sonLimg,slideMix, sonHimg, mixButton, listButton);
         
         
         
@@ -169,6 +193,14 @@ public class TP2 extends Application {
         /* DECLARATION */
         GridPane functionGridPane = new GridPane(); // A gauche dans root
         VBox generalPlayerBox = new VBox(); // Au centre dans root
+        
+        
+        /***************/
+        /*    SETUP    */
+        // functionGridPane
+        functionGridPane.setHgap(4);
+        functionGridPane.setVgap(2);
+        
         
         
         /***************/
