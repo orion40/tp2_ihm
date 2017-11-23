@@ -1,219 +1,343 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+* To change this license header, choose License Headers in Project Properties.
+* To change this template file, choose Tools | Templates
+* and open the template in the editor.
+*/
 package tp2;
 
+import java.util.ArrayList;
+import java.util.List;
 import javafx.application.Application;
-import javafx.geometry.Insets;
+import static javafx.application.Application.launch;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableColumn;
+import javafx.scene.control.TreeTableRow;
+import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.paint.Color;
-import javafx.stage.Stage; 
-
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 
 /**
- * MAIN ...
+ *
  * @author whoami
- * 
  */
 public class TP2 extends Application {
+    Stage stage;
+    BorderPane root, playlist;
+    
+    BooleanProperty isPlaylistShown = new SimpleBooleanProperty(false);
+    
+    public void hidePlaylist(ToggleButton playlistToggleButton, String buttonDefaultStyle){
+        /*
+        On désactive la coloration du toggleButton, enlevons le bottom de
+        root, et redimensionnant la fenêtre à la taille sans playlist.
+        */        
+        playlistToggleButton.setStyle(buttonDefaultStyle);
+        root.setBottom(null);
+        stage.setMinHeight(92);
+        stage.setMaxHeight(92);
+        stage.sizeToScene();
+    }
+    
+    /*
+            GRAPHICAL USER INTERFACE
+    */
+    
+    /*
+    Contient le nom de la piste, le temps de lecture, le slider
+    de controle du temps de la piste.
+    */
+    public BorderPane createCurrentTrackInfoPane(){
+        BorderPane currentTrackInfoPane = new BorderPane();
+        
+        currentTrackInfoPane.setLeft(new Label("Lecteur VLC"));
+        // Rien au centre
+        currentTrackInfoPane.setRight(new Label("00:00"));
+        currentTrackInfoPane.setBottom(new Slider());
+        
+        return currentTrackInfoPane;
+    }
+    
+    /* Contient l'icones de volume bas, le slider du son,
+    et l'icone de volume haut.
+    */
+    public BorderPane createSoundControlPane(){
+        BorderPane soundControlPane = new BorderPane();
+        
+        soundControlPane.setLeft(new Label("-"));
+        soundControlPane.setCenter(new Slider());
+        soundControlPane.setRight(new Label("+"));
+        
+        return soundControlPane;
+    }
+    
+    /*
+    Contient le bouton du mixer, et d'affichage de la playlist.
+    */
+    public BorderPane createOverallTrackControlButtonsPane(){
+        BorderPane overallTrackControlButtonsPane = new BorderPane();
+        ToggleButton playlistToggleButton = new ToggleButton(":=");
+        String buttonDefaultStyle = playlistToggleButton.getStyle();
+        ChangeListener stageResizeListener = new ChangeListener() {
+            @Override
+            public void changed(ObservableValue obs, Object t1, Object t2) {
+                Double newVal = Double.valueOf(t2.toString());
+                if (newVal.intValue() < 150){
+                    playlistToggleButton.setSelected(false);
+                    hidePlaylist(playlistToggleButton, buttonDefaultStyle);
+                }
+            }
+        };
+        
+        playlistToggleButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent t) {
+                if (playlistToggleButton.isSelected()){
+                    /*
+                    On Colore le button comme il faut, ajoutons la playlist,
+                    redimensionnant à la nouvelle taille.
+                    On ajoute un listener, au cas ou la playlist n'est plus suffisament visible.
+                    */
+                    //stage.heightProperty().addListener(stageResizeListener);
+                    playlistToggleButton.setStyle("-fx-background-color: #0000aa; ");
+                    root.setBottom(playlist);
+                    stage.sizeToScene();
+                    stage.setMaxHeight(stage.getHeight());
+                    stage.setHeight(stage.getHeight());
+                }else{
+                    hidePlaylist(playlistToggleButton, buttonDefaultStyle);
+                    //stage.heightProperty().removeListener(stageResizeListener);
+                }
+            }
+        });
+        
+        overallTrackControlButtonsPane.setLeft(new Button("|||"));
+        overallTrackControlButtonsPane.setRight(playlistToggleButton);
+        
+        return overallTrackControlButtonsPane;
+    }
+    
+    /*
+    Contient le slider du volume à gauche, et les boutons
+    pour le mixer et la playlist à droite.
+    */
+    public BorderPane createOverallTrackPane(){
+        BorderPane overallTrackPane = new BorderPane();
+        
+        overallTrackPane.setLeft(createSoundControlPane());
+        // Center is empty
+        overallTrackPane.setRight(createOverallTrackControlButtonsPane());
+        
+        return overallTrackPane;
+    }
+    
+    /*
+    Contient les bouttons d'avance rapide, de lecture, et
+    de recule rapide.
+    */
+    public BorderPane createCurrentTrackButtonsPane(){
+        BorderPane currentTrackButtonsPane = new BorderPane();
+        
+        currentTrackButtonsPane.setLeft(new Button("<<"));
+        currentTrackButtonsPane.setCenter(new Button(">"));
+        currentTrackButtonsPane.setRight(new Button(">>"));
+        
+        return currentTrackButtonsPane;
+    }
+    
+    /*
+    Contient les boutons de piste précédente, arret, et piste suivante.
+    */
+    public BorderPane createAllTracksButtonsPane(){
+        BorderPane allTracksButtonsPane = new BorderPane();
+        
+        allTracksButtonsPane.setLeft(new Button("|<"));
+        allTracksButtonsPane.setCenter(new Button("||"));
+        allTracksButtonsPane.setRight(new Button(">|"));
+        
+        return allTracksButtonsPane;
+    }
+    
+    /*
+    Contient la partie gauche du lecteur, c'est à dire
+    les boutons de recule rapide, de lecture, d'avance rapide,
+    de piste précédente, d'arrêt et de piste suivante.
+    */
+    public BorderPane createTracksButtonsPane(){
+        BorderPane tracksButtonsPane = new BorderPane();
+        
+        tracksButtonsPane.setTop(createCurrentTrackButtonsPane());
+        tracksButtonsPane.setBottom(createAllTracksButtonsPane());
+        
+        return tracksButtonsPane;
+    }
+    
+    public BorderPane createTrackControlPane(){
+        BorderPane trackControlPane = new BorderPane();
+        
+        trackControlPane.setTop(createCurrentTrackInfoPane());
+        trackControlPane.setBottom(createOverallTrackPane());
+        
+        return trackControlPane;
+    }
+    
+    /* Contient tout le lecteur */
+    public BorderPane createPlayerPane(){
+        BorderPane playerPane = new BorderPane();
+        
+        playerPane.setLeft(createTracksButtonsPane());
+        playerPane.setCenter(createTrackControlPane());
+        
+        return playerPane;
+    }
+    
+    // TODO : contenu playlist ici
+    
+    public TreeTableView<Track> createPlayListTableView(){
+        TreeTableView<Track> playlistTreeTableView = new TreeTableView<>();
+        TreeTableColumn<Track, String> trackNameColumn = new TreeTableColumn<>();
+        Track trackFolder = new Track("Cool tracks");
+        Track track1 = new Track("Chosen Few", "Name Of The DJ", "5:13");
+        Track track2 = new Track("Angerfist & Dr. Peacock", "Inframan", "4:22");
+        Track track3 = new Track("Zyklon", "Chemical Waste", "3:37");
+        Track track4 = new Track("The Speedfreak", "Boombox (Mat Weasel Remix)", "4:43");
+        Track track5 = new Track("Dr. Peacock", "Frenchcore Worldwide", "5:28");
+        TreeItem<Track> rootItem = new TreeItem<>(trackFolder);
+        TreeItem<Track> trackItem1 = new TreeItem<>(track1);
+        TreeItem<Track> trackItem2 = new TreeItem<>(track2);
+        TreeItem<Track> trackItem3 = new TreeItem<>(track3);
+        TreeItem<Track> trackItem4 = new TreeItem<>(track4);
+        TreeItem<Track> trackItem5 = new TreeItem<>(track5);
+        ArrayList<String> columnNames = new ArrayList<>();
+        columnNames.add("Name");
+        columnNames.add("Artist");
+        columnNames.add("Duration");
+        
+        rootItem.setExpanded(true);
+        rootItem.getChildren().setAll(trackItem1, trackItem2, trackItem3, trackItem4, trackItem5);
+        
+        //Creating a column
+        TreeTableColumn<Track,String> columnName = new TreeTableColumn<>("Name");
+        TreeTableColumn<Track,String> columnArtist = new TreeTableColumn<>("Artist");
+        TreeTableColumn<Track,String> columnDuration = new TreeTableColumn<>("Duration");
+        columnName.setPrefWidth(150);
+        columnArtist.setPrefWidth(150);
+        columnDuration.setPrefWidth(150);
+        
+        //Defining cell content
+        columnName.setCellValueFactory((TreeTableColumn.CellDataFeatures<Track, String> p) ->
+                new ReadOnlyStringWrapper(p.getValue().getValue().getTrackName()));
+        columnArtist.setCellValueFactory((TreeTableColumn.CellDataFeatures<Track, String> p) ->
+                new ReadOnlyStringWrapper(p.getValue().getValue().getArtistName()));
+        columnDuration.setCellValueFactory((TreeTableColumn.CellDataFeatures<Track, String> p) ->
+                new ReadOnlyStringWrapper(p.getValue().getValue().getDuration()));
+        
+        playlistTreeTableView.getColumns().addAll(columnName, columnArtist, columnDuration);
+        
+        //playlistTreeTableView.getCh
+        
+        //trackNameColumn.set
+        playlistTreeTableView.getColumns().add(trackNameColumn);
+        playlistTreeTableView.setRoot(rootItem);
+        //playlistTreeTableView.setColumnResizePolicy(clbck);
+        
+        playlistTreeTableView.setFixedCellSize(0);
+        
+        
+        return playlistTreeTableView;
+    }
+    
+    /*
+    Contient les boutons de controle de la playlist, c'est à dire
+    les boutons d'ajoute, d'aléatoire, et de boucle.
+    */
+    public BorderPane createPlaylistButtonsPane(){
+        BorderPane playlistButtonsPane = new BorderPane();
+        
+        playlistButtonsPane.setLeft(new Button("+"));
+        playlistButtonsPane.setCenter(new Button("?"));
+        playlistButtonsPane.setRight(new Button("loop"));
+        
+        return playlistButtonsPane;
+    }
+    
+    /*
+    Contient la partie basse de la playlist, c'est à dire les
+    boutons de controle, l'indication du nombre de pistes,
+    et un champs texte de recherche
+    */
+    public BorderPane createPlaylistControlPane(){
+        BorderPane playlistControlPane = new BorderPane();
+        
+        playlistControlPane.setLeft(createPlaylistButtonsPane());
+        playlistControlPane.setCenter(new Label("No tracks"));
+        playlistControlPane.setRight(new TextField("Search field"));
+        
+        return playlistControlPane;
+    }
+    
+    /* Contient toute la playlist */
+    public BorderPane createPlaylistPane(){
+        BorderPane playlistPane = new BorderPane();
+        StackPane tableViewPane = new StackPane();
+        
+        TreeTableView<Track> playlistTreeTableView = createPlayListTableView();
+        
+        tableViewPane.getChildren().add(playlistTreeTableView);
+        //playlistPane.visibleProperty().bind(isPlaylistShown);
+        
+        playlistPane.setTop(tableViewPane);
+        playlistPane.setBottom(createPlaylistControlPane());
+        
+        return playlistPane;
+    }
+    
+    /* Contient toute l'application */
+    public BorderPane createRootPane(){
+        BorderPane rootPane = new BorderPane();
+        root = rootPane;
+        playlist = createPlaylistPane();
+        
+        rootPane.setTop(createPlayerPane());
+        rootPane.setBottom(null);
+        
+        return rootPane;
+    }
     
     @Override
     public void start(Stage primaryStage) {
-        
-        
-        BorderPane root = createGUI();
-        
-        Scene scene = new Scene(root, 700, 100);
-        
-        primaryStage.setTitle("SUPER VLC OF THE FUTURE");
-        primaryStage.setResizable(true);
-        primaryStage.setMinWidth(700);
-        primaryStage.setMinHeight(100);
-        primaryStage.setMaxHeight(100);
+        stage = primaryStage;
+        Scene scene = new Scene(createRootPane());
+                
+        primaryStage.sizeToScene();
+        primaryStage.setTitle("VLC Media Player");
         primaryStage.setScene(scene);
         primaryStage.show();
+        primaryStage.setMinWidth(primaryStage.getWidth());
+        primaryStage.setMinHeight(92);
+        primaryStage.setMaxHeight(92);
     }
-
+    
     /**
-     * @param args the command line arguments 
+     * @param args the command line arguments
      */
     public static void main(String[] args) {
         launch(args);
     }
-    
-
-    
-    
-    /**
-     * Création de l'interface 
-     * @return borderpanel contenant toute l'interface
-     */
-    public BorderPane createGUI() {
-        
-        /* Une déclaration créer les élément de la couche actuelle */
-        /* Une affectation lie les éléments de la couche actuelle avec ...*/
-        /* ... ceux de la couche inférieur */
-        
-        /* ARBRES DES COUCHES : 
-        
-                                                         scene
-                                                           |
-                                         ----------BorderPane borderPane----------
-                                       /                 |                         \
-                                  (left)              (center)                   (bottom)
-                  GridPane functionGridPane       VBox generalPlayerBox          ????????
-                         |                          /          \   
-                   B*6  lecture          HBox playerBox     HBox mixBox
-                                                 |                  |
-                                               slide    slidePlayer + B*2 + i*2
-        
-        
-        */
-        
-        
-        
-        /*************************************************************/
-        /********************** COUCHE 4 *****************************/
-        
-        /***************/
-        /* DECLARATION */
-        // Image son
-        Image sonHt = new Image(getClass().getResourceAsStream("sonH.png"), 15, 15, true, true);
-        Image sonLt= new Image(getClass().getResourceAsStream("sonL.png"), 15, 15, true, true);
-        ImageView sonH = new ImageView(sonHt);
-        ImageView sonL = new ImageView(sonLt);
-        
-        // Button 
-        Button listButton = new Button();
-        Button mixButton = new Button();
-        
-        // Slide
-        Slider slidePlayer = new Slider();
-        
-        /***************/
-        /* AFFECTATION */
-        
-        
-        
-        
-        
-        /*************************************************************/
-        /********************** COUCHE 3 *****************************/
-        
-        /***************/
-        /* DECLARATION */
-        // image des boutons        
-        Image backimg = new Image(getClass().getResourceAsStream("backimg.png"), 30, 30, true, true);
-        Image playimg = new Image(getClass().getResourceAsStream("playimg.png"), 30, 30, true, true);
-        Image forwimg = new Image(getClass().getResourceAsStream("forwimg.png"), 30, 30, true, true);
-        Image previmg = new Image(getClass().getResourceAsStream("previmg.png"), 30, 30, true, true);
-        Image stopimg = new Image(getClass().getResourceAsStream("stopimg.png"), 30, 30, true, true);
-        Image nextimg = new Image(getClass().getResourceAsStream("nextimg.png"), 30, 30, true, true);
-
-        // Button de lecture
-        Button backButton = new Button();
-        Button playButton = new Button();
-        Button forwardButton = new Button();
-        Button previousButton = new Button();
-        Button stopButton = new Button();
-        Button nextButton = new Button();
-        
-        // Box pour generalPlayerBox
-        HBox playerBox = new HBox(); // slide lecture musique
-        HBox mixBox = new HBox(); // Controle son + ouverture menu son
-       
-        
-        /***************/
-        /*    SETUP    */
-        // image des boutons
-        backButton.setPadding(Insets.EMPTY);
-        backButton.setGraphic(new ImageView(backimg));
-        playButton.setPadding(Insets.EMPTY);
-        playButton.setGraphic(new ImageView(playimg));
-        forwardButton.setPadding(Insets.EMPTY);
-        forwardButton.setGraphic(new ImageView(forwimg));
-        previousButton.setPadding(Insets.EMPTY);
-        previousButton.setGraphic(new ImageView(previmg));
-        stopButton.setPadding(Insets.EMPTY);
-        stopButton.setGraphic(new ImageView(stopimg));
-        nextButton.setPadding(Insets.EMPTY);
-        nextButton.setGraphic(new ImageView(nextimg));
-
-        
-        /***************/
-        /* AFFECTATION */
-        // Slider pour la HBox "playerBox"
-        playerBox.getChildren().add(new Slider());
-        mixBox.getChildren().addAll(sonL,slidePlayer, sonH, listButton, mixButton);
-        
-        
-        
-        
-        /*************************************************************/
-        /********************** COUCHE 2 *****************************/
-        
-        /***************/
-        /* DECLARATION */
-        GridPane functionGridPane = new GridPane(); // A gauche dans root
-        VBox generalPlayerBox = new VBox(); // Au centre dans root
-        
-        
-        /***************/
-        /* AFFECTATION */
-        // Button du GridePan "functionGridePan"
-        functionGridPane.add(backButton, 0, 0);
-        functionGridPane.add(playButton, 1, 0);
-        functionGridPane.add(forwardButton, 2, 0);
-        functionGridPane.add(previousButton, 0, 1);
-        functionGridPane.add(stopButton, 1, 1);
-        functionGridPane.add(nextButton, 2, 1);
-        
-        // Box du generalplayer
-        generalPlayerBox.getChildren().addAll(playerBox, mixBox);
-        
-        
-        
-        /*************************************************************/
-        /********************** COUCHE 1 *****************************/
-        
-        /***************/
-        /* DECLARATION */
-        BorderPane borderPane = new BorderPane(); // Root
-        
-        /***************/
-        /*    SETUP    */
-        borderPane.setBackground(
-            new Background(
-                new BackgroundFill(
-                    Color.GREY, CornerRadii.EMPTY, Insets.EMPTY
-                )
-            )
-        );
-        
-        /***************/
-        /* AFFECTATION */
-        borderPane.setLeft(functionGridPane); // Boutton de lecture
-        borderPane.setCenter(generalPlayerBox); // Player
-        
-        
-        
-        return borderPane;
-    }
-    
-    
-
-
 }
