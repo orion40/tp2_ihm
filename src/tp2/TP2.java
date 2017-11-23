@@ -6,28 +6,24 @@
 package tp2;
 
 import java.util.ArrayList;
-import java.util.List;
 import javafx.application.Application;
-import static javafx.application.Application.launch;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableBooleanValue;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.control.TableColumn;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -40,8 +36,6 @@ import javafx.stage.Stage;
 public class TP2 extends Application {
     Stage stage;
     BorderPane root, playlist;
-    
-    BooleanProperty isPlaylistShown = new SimpleBooleanProperty(false);
     
     public void hidePlaylist(ToggleButton playlistToggleButton, String buttonDefaultStyle){
         /*
@@ -98,9 +92,10 @@ public class TP2 extends Application {
             @Override
             public void changed(ObservableValue obs, Object t1, Object t2) {
                 Double newVal = Double.valueOf(t2.toString());
-                if (newVal.intValue() < 150){
-                    playlistToggleButton.setSelected(false);
-                    hidePlaylist(playlistToggleButton, buttonDefaultStyle);
+                System.out.println(t2);
+                if (newVal.intValue() < 150 && playlistToggleButton.isSelected()){
+                    //playlistToggleButton.setSelected(false);
+                    //hidePlaylist(playlistToggleButton, buttonDefaultStyle);
                 }
             }
         };
@@ -114,19 +109,18 @@ public class TP2 extends Application {
                     redimensionnant à la nouvelle taille.
                     On ajoute un listener, au cas ou la playlist n'est plus suffisament visible.
                     */
-                    //stage.heightProperty().addListener(stageResizeListener);
                     playlistToggleButton.setStyle("-fx-background-color: #0000aa; ");
                     root.setBottom(playlist);
                     stage.sizeToScene();
                     stage.setMaxHeight(stage.getHeight());
                     stage.setHeight(stage.getHeight());
+                    stage.heightProperty().addListener(stageResizeListener);
                 }else{
+                    stage.heightProperty().removeListener(stageResizeListener);
                     hidePlaylist(playlistToggleButton, buttonDefaultStyle);
-                    //stage.heightProperty().removeListener(stageResizeListener);
                 }
             }
         });
-        
         overallTrackControlButtonsPane.setLeft(new Button("|||"));
         overallTrackControlButtonsPane.setRight(playlistToggleButton);
         
@@ -211,7 +205,6 @@ public class TP2 extends Application {
     
     public TreeTableView<Track> createPlayListTableView(){
         TreeTableView<Track> playlistTreeTableView = new TreeTableView<>();
-        TreeTableColumn<Track, String> trackNameColumn = new TreeTableColumn<>();
         Track trackFolder = new Track("Cool tracks");
         Track track1 = new Track("Chosen Few", "Name Of The DJ", "5:13");
         Track track2 = new Track("Angerfist & Dr. Peacock", "Inframan", "4:22");
@@ -224,11 +217,7 @@ public class TP2 extends Application {
         TreeItem<Track> trackItem3 = new TreeItem<>(track3);
         TreeItem<Track> trackItem4 = new TreeItem<>(track4);
         TreeItem<Track> trackItem5 = new TreeItem<>(track5);
-        ArrayList<String> columnNames = new ArrayList<>();
-        columnNames.add("Name");
-        columnNames.add("Artist");
-        columnNames.add("Duration");
-        
+        playlistTreeTableView.setColumnResizePolicy(TreeTableView.UNCONSTRAINED_RESIZE_POLICY);
         rootItem.setExpanded(true);
         rootItem.getChildren().setAll(trackItem1, trackItem2, trackItem3, trackItem4, trackItem5);
         
@@ -249,14 +238,9 @@ public class TP2 extends Application {
                 new ReadOnlyStringWrapper(p.getValue().getValue().getDuration()));
         
         playlistTreeTableView.getColumns().addAll(columnName, columnArtist, columnDuration);
-        
-        //playlistTreeTableView.getCh
-        
-        //trackNameColumn.set
-        playlistTreeTableView.getColumns().add(trackNameColumn);
+        playlistTreeTableView.setPrefHeight(200);
+        playlistTreeTableView.setMinHeight(50);
         playlistTreeTableView.setRoot(rootItem);
-        //playlistTreeTableView.setColumnResizePolicy(clbck);
-        
         playlistTreeTableView.setFixedCellSize(0);
         
         
@@ -294,13 +278,13 @@ public class TP2 extends Application {
     
     /* Contient toute la playlist */
     public BorderPane createPlaylistPane(){
+        BorderPane tableViewPane = new BorderPane();
         BorderPane playlistPane = new BorderPane();
-        StackPane tableViewPane = new StackPane();
         
         TreeTableView<Track> playlistTreeTableView = createPlayListTableView();
         
-        tableViewPane.getChildren().add(playlistTreeTableView);
-        //playlistPane.visibleProperty().bind(isPlaylistShown);
+        tableViewPane.setCenter(playlistTreeTableView);
+        tableViewPane.setMinHeight(50);
         
         playlistPane.setTop(tableViewPane);
         playlistPane.setBottom(createPlaylistControlPane());
