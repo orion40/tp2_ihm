@@ -88,37 +88,40 @@ public class TP2 extends Application {
         BorderPane overallTrackControlButtonsPane = new BorderPane();
         ToggleButton playlistToggleButton = new ToggleButton(":=");
         String buttonDefaultStyle = playlistToggleButton.getStyle();
-        ChangeListener stageResizeListener = new ChangeListener() {
+        ChangeListener stageResizeListener = (ChangeListener) new ChangeListener() {
             @Override
             public void changed(ObservableValue obs, Object t1, Object t2) {
-                Double newVal = Double.valueOf(t2.toString());
-                System.out.println(t2);
-                if (newVal.intValue() < 150 && playlistToggleButton.isSelected()){
-                    //playlistToggleButton.setSelected(false);
-                    //hidePlaylist(playlistToggleButton, buttonDefaultStyle);
+                Double newVal = Double.valueOf(t1.toString());
+                System.out.println("t1: " + t1);
+                System.out.println("t2 " + t2);
+                if (newVal.intValue() < 200 && playlistToggleButton.isSelected()){
+                    playlistToggleButton.setSelected(false);
+                    stage.heightProperty().removeListener(this);
+                    hidePlaylist(playlistToggleButton, buttonDefaultStyle);
                 }
+                System.out.println("stage height 1"+stage.getHeight());
+
             }
         };
         
-        playlistToggleButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                if (playlistToggleButton.isSelected()){
-                    /*
-                    On Colore le button comme il faut, ajoutons la playlist,
-                    redimensionnant à la nouvelle taille.
-                    On ajoute un listener, au cas ou la playlist n'est plus suffisament visible.
-                    */
-                    playlistToggleButton.setStyle("-fx-background-color: #0000aa; ");
-                    root.setBottom(playlist);
-                    stage.sizeToScene();
-                    stage.setMaxHeight(stage.getHeight());
-                    stage.setHeight(stage.getHeight());
-                    stage.heightProperty().addListener(stageResizeListener);
-                }else{
-                    stage.heightProperty().removeListener(stageResizeListener);
-                    hidePlaylist(playlistToggleButton, buttonDefaultStyle);
-                }
+        playlistToggleButton.setOnAction((ActionEvent t) -> {
+            if (playlistToggleButton.isSelected()){
+                /*
+                On Colore le button comme il faut, ajoutons la playlist,
+                redimensionnant à la nouvelle taille.
+                On ajoute un listener, au cas ou la playlist n'est plus suffisament visible.
+                */
+                playlistToggleButton.setStyle("-fx-background-color: #0000aa; ");
+                root.setBottom(playlist);
+                stage.sizeToScene();
+                stage.setMaxHeight(stage.getHeight());
+                stage.setHeight(stage.getHeight());
+                System.out.println("stage height 1(playlist)"+stage.getHeight());
+                stage.heightProperty().addListener(stageResizeListener);
+                System.out.println("stage height 2(playist)"+stage.getHeight());
+            }else{
+                stage.heightProperty().removeListener(stageResizeListener);
+                hidePlaylist(playlistToggleButton, buttonDefaultStyle);
             }
         });
         overallTrackControlButtonsPane.setLeft(new Button("|||"));
